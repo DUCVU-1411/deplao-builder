@@ -4,7 +4,7 @@
   { icon: "🎯", label: "ACTION", color: "bg-emerald-600", examples: ["Gửi tin nhắn", "Cập nhật CRM", "Google Sheets", "HTTP Request"] },
 ];
 const USECASES = [
-  { emoji: "🛒", title: "Chốt đơn tự động", desc: "Nhận "cho xin giá" → AI gợi ý → gửi báo giá → theo dõi phản hồi" },
+  { emoji: "🛒", title: "Chốt đơn tự động", desc: "Nhận 'cho xin giá' → AI gợi ý → gửi báo giá → theo dõi phản hồi" },
   { emoji: "📅", title: "Nhắc lịch hẹn", desc: "Cron mỗi sáng → lọc lịch hôm nay → nhắn từng khách" },
   { emoji: "🏷️", title: "Phân loại khách", desc: "Tin nhắn mới → AI phân tích → gắn nhãn → chuyển nhân viên phù hợp" },
   { emoji: "💳", title: "Xác nhận thanh toán", desc: "Webhook nhận tiền → tạo đơn POS → nhắn xác nhận → báo nội bộ" },
