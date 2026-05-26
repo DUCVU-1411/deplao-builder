@@ -329,10 +329,22 @@ Screens are ordered by typical usage flow: dashboard → chat → CRM → workfl
   </tr>
   <tr>
     <td>
+      <img src="./assets/scan-members-group.png" alt="Scan Zalo group members in Deplao" width="360" />
+      <br />
+      <sub><strong>Group member scanning</strong></sub>
+    </td>
+    <td>
+      <img src="./assets/campaign.png" alt="Mass messaging campaign in Deplao" width="360" />
+      <br />
+      <sub><strong>Mass messaging campaigns</strong></sub>
+    </td>
+    <td>
       <img src="./assets/workflow.png" alt="Drag-and-drop workflow editor in Deplao" width="360" />
       <br />
       <sub><strong>Workflow editor</strong></sub>
     </td>
+  </tr>
+  <tr>
     <td>
       <img src="./assets/detail-workflow.png" alt="Workflow node configuration in Deplao" width="360" />
       <br />
@@ -343,17 +355,22 @@ Screens are ordered by typical usage flow: dashboard → chat → CRM → workfl
       <br />
       <sub><strong>AI workflow generation</strong></sub>
     </td>
-  </tr>
-  <tr>
     <td>
       <img src="./assets/pos.png" alt="POS and sales integration in Deplao" width="360" />
       <br />
       <sub><strong>POS, shipping & payments</strong></sub>
     </td>
+  </tr>
+  <tr>
     <td>
       <img src="./assets/report.jpg" alt="Reports and performance analytics in Deplao" width="360" />
       <br />
       <sub><strong>Reports & analytics</strong></sub>
+    </td>
+    <td>
+      <img src="./assets/report-employee.png" alt="Employee performance report in Deplao" width="360" />
+      <br />
+      <sub><strong>Employee reports</strong></sub>
     </td>
     <td>
       <img src="./assets/erp.png" alt="Internal ERP and team operations in Deplao" width="360" />
