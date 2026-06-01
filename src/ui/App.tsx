@@ -1090,15 +1090,6 @@ export default function App() {
                         <div className="absolute inset-y-0 right-0 z-40 max-w-[92vw] overflow-hidden"
                             onClick={(e) => e.stopPropagation()}>
                           <ConversationInfo />
-                          <button type="button"
-                              onClick={closeRightInfoOverlay}
-                              title="Đóng"
-                              className="absolute top-2 left-2 z-50 w-8 h-8 rounded-full text-gray-200 flex items-center justify-center transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <line x1="18" y1="6" x2="6" y2="18" />
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </button>
                         </div>
                     )}
                     {/* Right panel: integration quick panel */}

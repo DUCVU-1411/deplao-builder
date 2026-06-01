@@ -14,6 +14,36 @@ interface VersionEntry {
 // ─── Changelog data — thêm entry mới vào ĐẦU mảng khi có bản cập nhật ────────
 const CHANGELOG: VersionEntry[] = [
   {
+    version: '26.4.4',
+    date: '06/2026',
+    type: 'minor',
+    highlights: [
+      '💬 Nâng cấp chuyển tiếp tin nhắn — hỗ trợ mọi loại, thêm soạn text kèm',
+      '📊 Chiến dịch CRM thông minh hơn — auto load thông tin từ tệp số điện thoại',
+      '🤖 Bổ sung Gemini 3.5 & DeepSeek V4, AI template trực quan hơn',
+    ],
+    changes: [
+      {
+        category: 'improved',
+        items: [
+          'Chuyển tiếp tin nhắn: hỗ trợ toàn bộ loại tin nhắn (text, ảnh, file, video) thay vì chỉ text như trước, thêm ô soạn text kèm khi chuyển tiếp',
+          'Chiến dịch CRM: tự động tra cứu và load thông tin khách hàng khi chọn tệp số điện thoại',
+          'Log lịch sử gửi tin CRM: bổ sung cột số điện thoại bên cạnh tên khách hàng',
+          'Thẻ AI trả lời: thiết kế lại giao diện cài đặt trực quan, dễ thao tác hơn',
+          'Cập nhật danh sách model AI: thêm Gemini 3.5 Flash và DeepSeek V4',
+        ],
+      },
+      {
+        category: 'fixed',
+        items: [
+          'Sửa lỗi chuyển tiếp tin nhắn không hoạt động với file, ảnh, video',
+          'Sửa lỗi không duyệt được thành viên nhóm Zalo',
+          'Sửa lỗi copy ảnh vào clipboard không hoạt động với ảnh remote',
+        ],
+      },
+    ],
+  },
+  {
     version: '26.4.3',
     date: '05/2026',
     type: 'minor',

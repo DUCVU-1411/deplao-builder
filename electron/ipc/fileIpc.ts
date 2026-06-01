@@ -1,4 +1,4 @@
-import { ipcMain, dialog, shell, app } from 'electron';
+import { ipcMain, dialog, shell, app, net } from 'electron';
 import FileStorageService from '../../src/services/file/FileStorageService';
 import Logger from '../../src/utils/Logger';
 import * as fs from 'fs';
@@ -144,6 +144,39 @@ export function registerFileIpc() {
             fs.writeFileSync(filePath, buffer);
             return { success: true, filePath };
         } catch (error: any) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    /**
+     * Đọc ảnh từ local path hoặc remote URL và trả về base64.
+     * Dùng main process để tránh CORS khi fetch remote URL từ renderer.
+     */
+    ipcMain.handle('file:readImageAsBase64', async (_event, { localPath: lp, remoteUrl }: { localPath?: string; remoteUrl?: string }) => {
+        try {
+            if (lp) {
+                const resolved = FileStorageService.resolveAbsolutePath(lp);
+                if (fs.existsSync(resolved)) {
+                    const buffer = fs.readFileSync(resolved);
+                    const ext = path.extname(resolved).replace('.', '').toLowerCase() || 'jpg';
+                    const mimeMap: Record<string, string> = { png: 'image/png', gif: 'image/gif', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg' };
+                    return { success: true, base64: buffer.toString('base64'), mimeType: mimeMap[ext] || 'image/jpeg' };
+                }
+            }
+            if (remoteUrl) {
+                const response = await net.fetch(remoteUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                });
+                if (!response.ok) return { success: false, error: `HTTP ${response.status}` };
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const ct = response.headers.get('content-type') || '';
+                const mimeType = ct.startsWith('image/') ? ct.split(';')[0].trim() : 'image/jpeg';
+                return { success: true, base64: buffer.toString('base64'), mimeType };
+            }
+            return { success: false, error: 'No source provided' };
+        } catch (error: any) {
+            Logger.error(`[fileIpc] readImageAsBase64 error: ${error.message}`);
             return { success: false, error: error.message };
         }
     });

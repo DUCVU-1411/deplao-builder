@@ -760,8 +760,8 @@ class WorkflowEngineService {
                 try {
                   const tempPath = await this.downloadUrlToTempFile(String(url));
                   try {
-                    const res = await api.sendImage(tempPath, cfg.threadId, threadType);
-                    lastMsgId = (res as any)?.message?.msgId || lastMsgId;
+                    const res = await api.sendMessage({ msg: '', attachments: [tempPath] }, cfg.threadId, threadType);
+                    lastMsgId = (res as any)?.attachment?.[0]?.msgId || (res as any)?.message?.msgId || lastMsgId;
                   } finally {
                     try { fs.unlinkSync(tempPath); } catch {}
                   }
@@ -805,14 +805,14 @@ class WorkflowEngineService {
       case 'zalo.sendImage': {
         const api = this.getApi(ctx.pageId);
         const threadType = Number(cfg.threadType) === 1 ? 1 : 0;
-        const result = await api.sendImage(cfg.filePath, cfg.threadId, threadType, cfg.message);
-        return { msgId: (result as any)?.msgId || '', success: true };
+        const result = await api.sendMessage({ msg: cfg.message || '', attachments: [cfg.filePath] }, cfg.threadId, threadType);
+        return { msgId: (result as any)?.attachment?.[0]?.msgId || '', success: true };
       }
 
       case 'zalo.sendFile': {
         const api = this.getApi(ctx.pageId);
         const threadType = Number(cfg.threadType) === 1 ? 1 : 0;
-        await api.sendFile(cfg.filePath, cfg.threadId, threadType);
+        await api.sendMessage({ msg: '', attachments: [cfg.filePath] }, cfg.threadId, threadType);
         return { success: true };
       }
 
@@ -1185,7 +1185,7 @@ class WorkflowEngineService {
               try {
                 let history: any[] = typeof cfg.chatHistory === 'string' && cfg.chatHistory.trim()
                   ? JSON.parse(cfg.chatHistory) : (Array.isArray(cfg.chatHistory) ? cfg.chatHistory : []);
-                const maxMsgs = Number(cfg.maxHistoryMessages ?? 10);
+            const maxMsgs = Number(cfg.maxHistoryMessages ?? 20);
                 if (history.length > maxMsgs) history = history.slice(-maxMsgs);
                 for (const msg of history) {
                   if (msg?.role && msg?.content) {
@@ -1218,7 +1218,7 @@ class WorkflowEngineService {
             } else if (Array.isArray(cfg.chatHistory)) {
               history = cfg.chatHistory;
             }
-            const maxMsgs = Number(cfg.maxHistoryMessages ?? 10);
+            const maxMsgs = Number(cfg.maxHistoryMessages ?? 20);
             // Trim to maxMsgs (most recent)
             if (history.length > maxMsgs) history = history.slice(-maxMsgs);
             for (const msg of history) {
@@ -1246,7 +1246,8 @@ class WorkflowEngineService {
         messages.push({ role: 'user', content: cfg.prompt });
 
         const platform = cfg.platform || 'openai';
-        const model = cfg.model || 'gpt-5.4-mini';
+        const rawModel = cfg.model || 'gpt-5.4-mini';
+        const model = this.normalizeModelName(rawModel);
         const maxTokens = Number(cfg.maxTokens || 500);
         const temperature = Number(cfg.temperature ?? 0.7);
 
@@ -1346,7 +1347,7 @@ class WorkflowEngineService {
         }
 
         const platform = cfg.platform || 'openai';
-        const model = cfg.model || 'gpt-5.4-mini';
+        const model = this.normalizeModelName(cfg.model || 'gpt-5.4-mini');
         const classifyMessages = [
           { role: 'system' as const, content: systemMsg },
           { role: 'user' as const, content: cfg.input },
@@ -1888,6 +1889,20 @@ class WorkflowEngineService {
       default:         return 'https://api.openai.com/v1/chat/completions';
     }
   }
+
+  /** Normalize legacy/incorrect model names to current API model IDs */
+  private normalizeModelName(model: string): string {
+    const aliases: Record<string, string> = {
+      'deepseek-chat-v3.2':    'deepseek-v4-flash',
+      'deepseek-chat-v3.1':    'deepseek-v4-flash',
+      'deepseek-reasoner-r1.5':'deepseek-v4-pro',
+      'gemini-3.1-pro':        'gemini-3.1-pro-preview',
+      'gemini-3.1-flash':      'gemini-3.5-flash',
+      'gemini-3.0-flash':      'gemini-3-flash-preview',
+      'gemini-3.0-flash-lite': 'gemini-3-flash-preview',
+    };
+    return aliases[model] ?? model;
+}
 
   /** Convert OpenAI-format messages to Google Gemini format */
   private openaiMessagesToGemini(messages: Array<{ role: string; content: string }>): any[] {

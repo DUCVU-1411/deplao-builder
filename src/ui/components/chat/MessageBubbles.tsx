@@ -323,7 +323,7 @@ function MediaBubble({ msg, isSelf, onView }: { msg: any; isSelf: boolean; onVie
   }
 
   const imgNode = (
-    <div className="relative">
+    <div className="relative max-w-xs">
       <img
         src={displayUrl}
         alt=""
@@ -342,7 +342,7 @@ function MediaBubble({ msg, isSelf, onView }: { msg: any; isSelf: boolean; onVie
 
   if (!caption) return imgNode;
   return (
-    <div className={`flex flex-col rounded-2xl overflow-hidden ring-1 ring-black/[0.12]${isSelf ? ' rounded-br-sm' : ' rounded-bl-sm'}`}>
+    <div className={`flex flex-col rounded-2xl overflow-hidden ring-1 ring-black/[0.12] max-w-xs${isSelf ? ' rounded-br-sm' : ' rounded-bl-sm'}`}>
       {imgNode}
       <div className={`px-3 py-2 text-sm break-words${isSelf ? ' bg-blue-600 text-white' : ' bg-gray-700 text-gray-200'}`}>
         {convertZaloEmojis(caption)}

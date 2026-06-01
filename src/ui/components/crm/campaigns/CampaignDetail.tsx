@@ -61,7 +61,7 @@ export default function CampaignDetail({ campaign, zaloId, allLabels, localLabel
   }, [campaign.id, loadContacts]);
 
   const handleConfirmTargets = async (selected: any[]) => {
-    const toAdd = selected.map(c => ({ contactId: c.contact_id, displayName: c.alias || c.display_name, avatar: c.avatar }));
+    const toAdd = selected.map(c => ({ contactId: c.contact_id, displayName: c.alias || c.display_name, avatar: c.avatar, phone: c.phone || '' }));
     await onAddContacts(campaign.id, toAdd);
     await loadContacts();
   };
@@ -170,7 +170,13 @@ export default function CampaignDetail({ campaign, zaloId, allLabels, localLabel
               : <div className="w-7 h-7 rounded-full bg-gray-600 flex items-center justify-center text-xs text-white flex-shrink-0">
                   {(c.display_name || c.contact_id || '?').charAt(0).toUpperCase()}
                 </div>}
-            <span className="flex-1 text-xs text-gray-200 truncate">{c.display_name || c.contact_id}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-200 truncate">{c.display_name || c.contact_id}</p>
+              {c.phone && <p className="text-[11px] text-gray-500 font-mono truncate">{c.phone}</p>}
+              {!c.phone && c.contact_id && c.contact_id !== c.display_name && (
+                <p className="text-[11px] text-gray-600 font-mono truncate">{c.contact_id}</p>
+              )}
+            </div>
             <span className={`text-[11px] flex-shrink-0 ${STATUS_STYLE[c.status]}`}>
               {c.status === 'pending' ? '⏳' : c.status === 'sending' ? '📤' : c.status === 'sent' ? '✓' : '✕'} {c.status}
             </span>

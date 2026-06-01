@@ -146,6 +146,7 @@ export interface CRMCampaignContact {
     contact_id: string;
     display_name?: string;
     avatar?: string;
+    phone?: string;
     status: CRMContactStatus;
     sent_at?: number;
     retry_count?: number;
@@ -781,6 +782,7 @@ class DatabaseService {
         try { this.exec(`ALTER TABLE crm_campaigns ADD COLUMN friend_request_message TEXT NOT NULL DEFAULT ''`); } catch {}
         try { this.exec(`ALTER TABLE crm_campaigns ADD COLUMN campaign_type TEXT NOT NULL DEFAULT 'message'`); } catch {}
         try { this.exec(`ALTER TABLE crm_campaigns ADD COLUMN mixed_config TEXT NOT NULL DEFAULT '{}'`); } catch {}
+        try { this.exec(`ALTER TABLE crm_campaign_contacts ADD COLUMN phone TEXT NOT NULL DEFAULT ''`); } catch {}
 
         this.exec(`
             CREATE TABLE IF NOT EXISTS crm_campaign_contacts (
@@ -4737,14 +4739,14 @@ class DatabaseService {
         } catch (err: any) { Logger.error(`[DB] cloneCRMCampaign: ${err.message}`); return 0; }
     }
 
-    public addCampaignContacts(campaignId: number, ownerZaloId: string, contacts: Array<{ contactId: string; displayName?: string; avatar?: string }>): void {
+    public addCampaignContacts(campaignId: number, ownerZaloId: string, contacts: Array<{ contactId: string; displayName?: string; avatar?: string; phone?: string }>): void {
         if (!this.initialized || !contacts.length) return;
         try {
             const stmt = db!.prepare(
-                `INSERT OR IGNORE INTO crm_campaign_contacts (campaign_id, owner_zalo_id, contact_id, display_name, avatar, status, sent_at, retry_count, error) VALUES (?,?,?,?,?,'pending',0,0,'')`
+                `INSERT OR IGNORE INTO crm_campaign_contacts (campaign_id, owner_zalo_id, contact_id, display_name, avatar, phone, status, sent_at, retry_count, error) VALUES (?,?,?,?,?,?,'pending',0,0,'')`
             );
             for (const c of contacts) {
-                stmt.run(campaignId, ownerZaloId, c.contactId, c.displayName || '', c.avatar || '');
+                stmt.run(campaignId, ownerZaloId, c.contactId, c.displayName || '', c.avatar || '', c.phone || '');
             }
             this.save();
         } catch (err: any) { Logger.error(`[DB] addCampaignContacts: ${err.message}`); }

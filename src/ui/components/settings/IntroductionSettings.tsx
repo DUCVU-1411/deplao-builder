@@ -97,7 +97,7 @@ function OverviewPanel() {
         <span className="text-4xl leading-none">🤖</span>
         <div>
           <h3 className="text-white font-bold text-base">Deplao</h3>
-          <p className="text-gray-400 text-xs mt-0.5">Nền tảng vận hành bán hàng nội bộ: chat đa kênh, CRM, ERP, workflow và AI trên desktop</p>
+          <p className="text-gray-400 text-xs mt-0.5">Phần mềm desktop quản lý Zalo Đa tài khoản tích hợp CRM, ERP, POS, Workflow và AI Assistant giúp đội nhóm bán hàng, chăm sóc khách hàng và marketing trên Zalo vận hành tập trung trong một ứng dụng duy nhất.</p>
           <div className="flex gap-1.5 mt-2 flex-wrap">
             <Badge text="Desktop App" color="bg-blue-600/30 text-blue-300" />
           </div>

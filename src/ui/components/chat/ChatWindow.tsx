@@ -1868,50 +1868,39 @@ export default function ChatWindow() {
           msg={forwardMsg}
           contacts={contactList}
           onClose={() => setForwardMsg(null)}
-          onForward={async (threadId, threadType) => {
+          onForward={async (threadId, threadType, composeText) => {
             const auth = getAuth();
             if (!auth) return;
-            const msgType = forwardMsg.msg_type || '';
-            const content = forwardMsg.content || '';
-            const msgIsFile = isFileType(msgType, content);
-            const msgIsImage = !msgIsFile && isMediaType(msgType, content);
             try {
-              if (msgIsFile) {
-                // Forward file: need local copy
-                let localPath = '';
+              const msgType = forwardMsg.msg_type || '';
+              const content = forwardMsg.content || '';
+              const isVideo = msgType === 'chat.video.msg';
+              const isFile = !isVideo && isFileType(msgType, content);
+              const isImage = !isVideo && !isFile && isMediaType(msgType, content);
+
+              // Lấy local path an toàn (local_paths có thể là null/'{}'/'null')
+              const getPath = (): string => {
                 try {
-                  const lp = typeof forwardMsg.local_paths === 'string' ? JSON.parse(forwardMsg.local_paths || '{}') : (forwardMsg.local_paths || {});
-                  localPath = lp.file || lp.main || '';
-                } catch {}
-                if (!localPath) {
-                  showNotification('File chưa tải về — không thể chuyển tiếp', 'error');
-                  return;
-                }
+                  const raw = typeof forwardMsg.local_paths === 'string'
+                    ? JSON.parse(forwardMsg.local_paths || '{}')
+                    : (forwardMsg.local_paths || {});
+                  if (!raw || typeof raw !== 'object') return '';
+                  return raw.file || raw.video || raw.main || raw.hd || Object.values(raw).find(v => typeof v === 'string' && v) as string || '';
+                } catch { return ''; }
+              };
+              const localPath = getPath();
+
+              if ((isFile || isVideo) && localPath) {
                 await ipc.zalo?.sendFile({ auth, filePath: localPath, threadId, type: threadType });
-              } else if (msgIsImage) {
-                // Forward image: need local copy
-                let localPath = '';
-                try {
-                  const lp = typeof forwardMsg.local_paths === 'string' ? JSON.parse(forwardMsg.local_paths || '{}') : (forwardMsg.local_paths || {});
-                  localPath = lp.main || lp.hd || (Object.values(lp)[0] as string) || '';
-                } catch {}
-                if (!localPath) {
-                  showNotification('Ảnh chưa tải về — không thể chuyển tiếp', 'error');
-                  return;
-                }
+              } else if (isImage && localPath) {
                 await ipc.zalo?.sendImage({ auth, filePath: localPath, threadId, type: threadType, message: '' });
               } else {
-                // Text message: use forwardMessage API
-                let textContent = content;
-                try {
-                  const parsed = JSON.parse(content);
-                  if (typeof parsed === 'string') textContent = parsed;
-                  else if (parsed?.msg && typeof parsed.msg === 'string') textContent = parsed.msg;
-                  else if (parsed?.message && typeof parsed.message === 'string') textContent = parsed.message;
-                  else if (parsed?.content && typeof parsed.content === 'string') textContent = parsed.content;
-                } catch {}
-                const messagePayload = JSON.stringify({ data: { content: textContent } });
-                await ipc.zalo?.forwardMessage({ auth, message: messagePayload, threadIds: [threadId], type: threadType });
+                // Text / sticker / link / other
+                const text = composeText || extractMsgText(forwardMsg);
+                await ipc.zalo?.sendMessage({ auth, message: text, threadId, type: threadType });
+              }
+              if (composeText && (isFile || isVideo || isImage) && localPath) {
+                await ipc.zalo?.sendMessage({ auth, message: composeText, threadId, type: threadType });
               }
               showNotification('Đã chuyển tiếp tin nhắn', 'success');
             } catch (e: any) {
@@ -4594,11 +4583,26 @@ export function ActionRow({ icon, label, onClick, textColor = 'text-gray-300' }:
 }
 
 
+/** Trích xuất nội dung text từ msg.content để dùng làm fallback cho forward */
+function extractMsgText(msg: any): string {
+  try {
+    const c = msg.content;
+    if (!c || c === 'null') return '[Tin nhắn]';
+    const parsed = JSON.parse(c);
+    if (typeof parsed === 'string') return parsed;
+    if (parsed?.msg && typeof parsed.msg === 'string') return parsed.msg;
+    if (parsed?.message && typeof parsed.message === 'string') return parsed.message;
+    if (parsed?.content && typeof parsed.content === 'string') return parsed.content;
+    if (parsed?.title) return `📂 ${parsed.title}`;
+    return '[Tin nhắn]';
+  } catch { return msg.content || '[Tin nhắn]'; }
+}
+
 function ForwardMessageModal({ msg, contacts, onClose, onForward }: {
   msg: any;
   contacts: any[];
   onClose: () => void;
-  onForward: (threadId: string, threadType: number) => Promise<void>;
+  onForward: (threadId: string, threadType: number, composeText: string) => Promise<void>;
 }) {
   const { labels: allLabels, groupInfoCache } = useAppStore();
   const { activeAccountId } = useAccountStore();
@@ -4609,6 +4613,7 @@ function ForwardMessageModal({ msg, contacts, onClose, onForward }: {
   const [selectedLabelId, setSelectedLabelId] = React.useState<number | null>(null);
   const [forwarding, setForwarding] = React.useState<string | null>(null);
   const [labelSource, setLabelSource] = React.useState<'local' | 'zalo'>('local');
+  const [composeText, setComposeText] = React.useState('');
 
   // ── Local labels ──────────────────────────────────────────────────────────
   const [localLabels, setLocalLabels] = React.useState<{ id: number; name: string; color: string; text_color?: string; emoji?: string }[]>([]);
@@ -4695,7 +4700,7 @@ function ForwardMessageModal({ msg, contacts, onClose, onForward }: {
   const handleSelect = async (contact: any) => {
     if (forwarding) return;
     setForwarding(contact.contact_id);
-    try { await onForward(contact.contact_id, contact.contact_type === 'group' ? 1 : 0); }
+    try { await onForward(contact.contact_id, contact.contact_type === 'group' ? 1 : 0, composeText); }
     finally { setForwarding(null); }
   };
 
@@ -4766,6 +4771,17 @@ function ForwardMessageModal({ msg, contacts, onClose, onForward }: {
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-700 text-gray-400 hover:text-white transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
+        </div>
+
+        {/* Compose text */}
+        <div className="px-4 py-2.5 border-b border-gray-700 flex-shrink-0">
+          <textarea
+            value={composeText}
+            onChange={e => setComposeText(e.target.value)}
+            placeholder="Nhập nội dung kèm..."
+            rows={2}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-blue-500"
+          />
         </div>
 
         {/* Tabs */}
@@ -4873,7 +4889,8 @@ function ForwardMessageModal({ msg, contacts, onClose, onForward }: {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-200 truncate">{c.display_name || c.contact_id}</p>
+                <p className="text-sm text-gray-200 truncate">{c.alias || c.display_name || c.contact_id}
+                  {c.alias && c.display_name && <span className="text-xs text-gray-500 ml-1">({c.display_name})</span>}</p>
                 {c.contact_type === 'group'
                   ? <p className="text-xs text-gray-500">Nhóm</p>
                   : c.last_message_time

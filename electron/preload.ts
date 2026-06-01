@@ -98,6 +98,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     enableGroupLink: (params: any) => ipcRenderer.invoke('zalo:enableGroupLink', params),
     disableGroupLink: (params: any) => ipcRenderer.invoke('zalo:disableGroupLink', params),
     getPendingGroupMembers: (params: any) => ipcRenderer.invoke('zalo:getPendingGroupMembers', params),
+    reviewPendingMemberRequest: (params: any) => ipcRenderer.invoke('zalo:reviewPendingMemberRequest', params),
     getMessageHistory: (params: any) => ipcRenderer.invoke('zalo:getMessageHistory', params),
     getGroupChatHistory: (params: any) => ipcRenderer.invoke('zalo:getGroupChatHistory', params),
     getPinConversations: (auth: any) => ipcRenderer.invoke('zalo:getPinConversations', { auth }),
@@ -275,6 +276,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saveAs: (params: any) => ipcRenderer.invoke('file:saveAs', params),
     saveTempBlob: (params: any) => ipcRenderer.invoke('file:saveTempBlob', params),
     getVideoMeta: (params: any) => ipcRenderer.invoke('file:getVideoMeta', params),
+    readImageAsBase64: (params: { localPath?: string; remoteUrl?: string }) => ipcRenderer.invoke('file:readImageAsBase64', params),
   },
 
   // ─── Workflow Engine ─────────────────────────────────────────────

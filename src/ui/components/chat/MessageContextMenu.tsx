@@ -157,18 +157,24 @@ export default function MessageContextMenu({
   const handleCopyImage = async () => {
     onClose();
     try {
-      // Ưu tiên local file, fallback remote URL
-      const srcUrl = localPath
-        ? toLocalMediaUrl(localPath)
-        : remoteUrl;
-      if (!srcUrl) { showNotification?.('Không có ảnh để sao chép', 'error'); return; }
+      if (!localPath && !remoteUrl) { showNotification?.('Không có ảnh để sao chép', 'error'); return; }
 
-      // Fetch image as blob rồi write vào clipboard
-      const response = await fetch(srcUrl);
-      const blob = await response.blob();
-      // Đảm bảo là image/png (Chrome Clipboard API chỉ hỗ trợ png)
-      let pngBlob = blob;
-      if (blob.type !== 'image/png') {
+      // Dùng main process fetch để tránh lỗi CORS khi fetch remote URL từ renderer
+      const result = await ipc.file?.readImageAsBase64({ localPath: localPath || undefined, remoteUrl: remoteUrl || undefined });
+      if (!result?.success || !result.base64) {
+        showNotification?.('Không thể tải ảnh: ' + (result?.error || 'unknown'), 'error');
+        return;
+      }
+
+      // Chuyển base64 → Blob
+      const binary = atob(result.base64);
+      const arr = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+      const blob = new Blob([arr], { type: result.mimeType || 'image/jpeg' });
+
+      // Đảm bảo là image/png (Clipboard API chỉ hỗ trợ png)
+      let pngBlob: Blob = blob;
+      if (result.mimeType !== 'image/png') {
         const bmp = await createImageBitmap(blob);
         const canvas = document.createElement('canvas');
         canvas.width = bmp.width; canvas.height = bmp.height;
@@ -176,9 +182,7 @@ export default function MessageContextMenu({
         ctx.drawImage(bmp, 0, 0);
         pngBlob = await new Promise<Blob>(res => canvas.toBlob(b => res(b!), 'image/png'));
       }
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': pngBlob }),
-      ]);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
       showNotification?.('Đã sao chép ảnh vào clipboard', 'success');
     } catch (e: any) {
       showNotification?.('Không thể sao chép ảnh: ' + e.message, 'error');

@@ -430,8 +430,12 @@ export default function SendHistoryLog(_props: SendHistoryLogProps) {
                         <span className="text-[9px] text-purple-400 flex-shrink-0 bg-purple-400/10 px-1 rounded">nhóm</span>
                       )}
                     </div>
-                    {phone && <p className="text-gray-500 text-[11px] truncate">{phone}</p>}
-                    {!log.display_name && <p className="text-gray-600 font-mono text-[11px] truncate">{log.contact_id}</p>}
+                    {phone
+                      ? <p className="text-gray-500 text-[11px] font-mono truncate">{phone}</p>
+                      : log.contact_id && log.contact_id !== log.display_name
+                        ? <p className="text-gray-600 font-mono text-[11px] truncate">{log.contact_id}</p>
+                        : null
+                    }
                   </div>
                   {/* Message */}
                   <div className="min-w-0">
